@@ -6,6 +6,7 @@ import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Transaction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,6 +54,34 @@ public class MessageDatasource {
             }
         }
         return messages;
+    }
+
+    public List<Message> searchExactMessage(String text, DatastoreService datastoreService) {
+        List<Entity> msgEntities = getMessageEntities(text, datastoreService);
+        MessageMapper mapper = new MessageMapper();
+        List<Message> messages = new ArrayList<>(msgEntities.size());
+        for (Entity entity :
+                msgEntities) {
+            Message message = mapper.fromEntity(entity);
+            messages.add(message);
+        }
+        return messages;
+    }
+
+    public void deleteMessages(List<Message> messages, DatastoreService datastoreService) {
+        for (Message message :
+                messages) {
+            datastoreService.delete(KeyFactory.stringToKey(message.getId()));
+        }
+    }
+
+    private List<Entity> getMessageEntities(String text, DatastoreService datastoreService) {
+        Query.Filter propertyFilter =
+                new Query.FilterPredicate(PROPERTY_TEXT, Query.FilterOperator.EQUAL, text);
+        Query query = new Query(KIND_MESSAGE).setFilter(propertyFilter);
+        PreparedQuery preparedQuery = datastoreService.prepare(query);
+        FetchOptions options = FetchOptions.Builder.withDefaults();
+        return preparedQuery.asList(options);
     }
 
     private List<Entity> getAllMessageEntities(DatastoreService datastoreService) {

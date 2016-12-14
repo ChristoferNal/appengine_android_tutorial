@@ -2,6 +2,7 @@ package com.example.christoforos.myapplication.backend.model;
 
 import com.example.christoforos.myapplication.backend.utils.JsonParser;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.KeyFactory;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -24,7 +25,9 @@ public class MessageMapper {
     }
 
     public Message fromEntity(Entity entity) {
-        return new Message((String) entity.getProperty(MessageDatasource.PROPERTY_TEXT));
+        Message message = new Message((String) entity.getProperty(MessageDatasource.PROPERTY_TEXT));
+        message.setId(KeyFactory.keyToString(entity.getKey()));
+        return message;
     }
 
     public JSONObject toJson(Message message){
